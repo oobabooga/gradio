@@ -26,8 +26,8 @@ jobs:
       - name: Set up PNPM
         uses: pnpm/action-setup@v4
         with:
-          # FIX: Use pnpm version 9 as required by the error log
-          version: 9
+          # FIX: Use the specific minor version required by the project
+          version: 9.1
 
       # Step 4: Install all dependencies (Python & JS)
       - name: Install Dependencies
