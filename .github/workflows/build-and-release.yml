@@ -26,7 +26,6 @@ jobs:
       - name: Set up PNPM
         uses: pnpm/action-setup@v4
         with:
-          # FIX: Use the specific minor version required by the project
           version: 9.1
 
       # Step 4: Install all dependencies (Python & JS)
@@ -50,15 +49,19 @@ jobs:
           TAG_NAME: v4.37.2-custom.1 # The static tag for your release
         run: |
           # Delete the release and the associated tag if they already exist
-          gh release delete $TAG_NAME -y || echo "Release $TAG_NAME did not exist, creating new one."
+          gh release delete $TAG_NAME -y || echo "Release $TAG_NAME did not exist."
           git push origin --delete $TAG_NAME || echo "Tag $TAG_NAME did not exist on remote."
-          
-          # Create a new release with the same tag name
+
+          # FIX: Create the tag locally and push it to the remote repository
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+
+          # Create a new release associated with the new tag
           gh release create $TAG_NAME \
             --title "Custom Gradio Build (Latest)" \
             --notes "This release contains the latest wheels built manually from the main branch."
-      
-      # Step 8: Upload the new wheel files to the release, overwriting any old ones
+
+      # Step 8: Upload the new wheel files to the release
       - name: Upload Wheels to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
