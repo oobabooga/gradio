@@ -26,7 +26,8 @@ jobs:
       - name: Set up PNPM
         uses: pnpm/action-setup@v4
         with:
-          version: 6 # Required for Gradio v4.x
+          # FIX: Use pnpm version 9 as required by the error log
+          version: 9
 
       # Step 4: Install all dependencies (Python & JS)
       - name: Install Dependencies
