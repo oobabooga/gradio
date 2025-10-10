@@ -1,0 +1,64 @@
+name: Build and Release Custom Gradio Manually
+
+# This allows the action to be triggered manually from the Actions tab
+on:
+  workflow_dispatch:
+
+# Grant permissions for the workflow to manage releases
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out the repository's code from the main branch
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python 3.11
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Step 3: Set up PNPM (Gradio's JS package manager)
+      - name: Set up PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 6 # Required for Gradio v4.x
+
+      # Step 4: Install all dependencies (Python & JS)
+      - name: Install Dependencies
+        run: |
+          pip install hatch
+          bash scripts/install_gradio.sh
+
+      # Step 5: Build the frontend (A crucial step!)
+      - name: Build Frontend
+        run: bash scripts/build_frontend.sh
+
+      # Step 6: Build the Python wheels using Hatch
+      - name: Build Wheels
+        run: hatch build
+
+      # Step 7: Create or update the GitHub Release
+      - name: Create or Update GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: v4.37.2-custom.1 # The static tag for your release
+        run: |
+          # Delete the release and the associated tag if they already exist
+          gh release delete $TAG_NAME -y || echo "Release $TAG_NAME did not exist, creating new one."
+          git push origin --delete $TAG_NAME || echo "Tag $TAG_NAME did not exist on remote."
+          
+          # Create a new release with the same tag name
+          gh release create $TAG_NAME \
+            --title "Custom Gradio Build (Latest)" \
+            --notes "This release contains the latest wheels built manually from the main branch."
+      
+      # Step 8: Upload the new wheel files to the release, overwriting any old ones
+      - name: Upload Wheels to Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload v4.37.2-custom.1 dist/*.whl --clobber
