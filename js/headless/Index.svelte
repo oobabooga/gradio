@@ -23,7 +23,6 @@
     }
 </script>
 
-<!-- Render nothing -->
-<div class="headless-component" style="display: none;" id={elem_id}>
+<Block {elem_id} {elem_classes} {visible} {loading_status}>
     <!-- No visual content -->
-</div>
+</Block>
