@@ -2,12 +2,6 @@ name: Build and Release Custom Gradio Manually
 
 on:
   workflow_dispatch:
-    inputs:
-      version_suffix:
-        description: 'Custom version suffix (e.g., 1, 2, etc.)'
-        required: true
-        default: '1'
-        type: string
 
 permissions:
   contents: write
@@ -42,16 +36,7 @@ jobs:
           pip install hatch
           bash scripts/install_gradio.sh
 
-      # Optional Step 6: Dynamically append custom suffix to versions in package.json (skippable if you commit customs to main)
-      - name: Set Custom Versions
-        run: |
-          for file in gradio/package.json client/python/gradio_client/package.json; do
-            if [ -f "$file" ]; then
-              jq '.version = (.version | sub("\\+.*$"; "") + "+custom.${{ inputs.version_suffix }}")' $file > temp.json && mv temp.json $file
-            fi
-          done
-
-      # Step 7: Extract versions from package.json for tag and notes
+      # Step 6: Extract versions from package.json for release notes
       - name: Extract Versions
         id: extract-versions
         run: |
@@ -60,45 +45,38 @@ jobs:
           CLIENT_VERSION=$(jq -r .version client/python/gradio_client/package.json)
           echo "CLIENT_VERSION=$CLIENT_VERSION" >> $GITHUB_ENV
 
-      # Step 8: Build the frontend (A crucial step!)
+      # Step 7: Build the frontend
       - name: Build Frontend
         run: bash scripts/build_frontend.sh
 
-      # Step 9: Build gradio_client wheel
+      # Step 8: Build gradio_client wheel
       - name: Build Gradio Client Wheel
         run: |
           cd client/python
           hatch build
           cd ../..
 
-      # Step 10: Build the main Gradio Python wheels using Hatch
+      # Step 9: Build the main Gradio Python wheels
       - name: Build Gradio Wheels
         run: hatch build
 
-      # Step 11: Create or update the GitHub Release
+      # Step 10: Create or update the GitHub Release
       - name: Create or Update GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: v${{ env.GRADIO_VERSION }}  # Dynamic, based on Gradio's file version (e.g., v4.37.2+custom.1)
+          TAG_NAME: custom-build
         run: |
-          # Delete the release and the associated tag if they already exist
-          gh release delete $TAG_NAME -y || echo "Release $TAG_NAME did not exist."
-          git push origin --delete $TAG_NAME || echo "Tag $TAG_NAME did not exist on remote."
-
-          # Create the tag locally and push it to the remote repository
-          git tag $TAG_NAME
-          git push origin $TAG_NAME
-
-          # Create a new release associated with the new tag
+          # Create the release if it doesn't exist (ignore error if it does)
           gh release create $TAG_NAME \
-            --title "Custom Gradio Build (Gradio ${{ env.GRADIO_VERSION }}, Client ${{ env.CLIENT_VERSION }})" \
-            --notes "This release contains the latest wheels built manually from the main branch."
+            --title "Custom Gradio Build (Latest)" \
+            --notes "Latest custom build. Current versions: Gradio ${{ env.GRADIO_VERSION }}, Client ${{ env.CLIENT_VERSION }}" \
+            || echo "Release already exists, will update it."
 
-      # Step 12: Upload both gradio_client and gradio wheel files to the release
+      # Step 11: Upload wheels to the release (--clobber replaces existing files)
       - name: Upload Wheels to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: v${{ env.GRADIO_VERSION }}
+          TAG_NAME: custom-build
         run: |
           gh release upload $TAG_NAME dist/*.whl --clobber
           gh release upload $TAG_NAME client/python/dist/*.whl --clobber
