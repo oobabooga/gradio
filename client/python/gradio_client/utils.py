@@ -900,6 +900,10 @@ def json_schema_to_python_type(schema: Any) -> str:
 
 def _json_schema_to_python_type(schema: Any, defs) -> str:
     """Convert the json schema into a python type hint"""
+    # Handle boolean schemas first (from Pydantic 2.9+)
+    if isinstance(schema, bool):
+        return "any" if schema else "never"
+
     if schema == {}:
         return "Any"
     type_ = get_type(schema)
