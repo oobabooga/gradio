@@ -859,7 +859,11 @@ class APIInfoParseError(ValueError):
     pass
 
 
-def get_type(schema: dict):
+def get_type(schema: dict | bool):
+    # Handle boolean schema first
+    if isinstance(schema, bool):
+        return "any" if schema else "never"
+
     if "const" in schema:
         return "const"
     if "enum" in schema:
