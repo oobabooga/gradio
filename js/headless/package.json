@@ -1,0 +1,15 @@
+{
+  "name": "@gradio/headless",
+  "version": "0.0.1",
+  "description": "Gradio headless component for assigning values to global JS variables",
+  "type": "module",
+  "main": "Index.svelte",
+  "author": "",
+  "license": "Apache-2.0",
+  "private": false,
+  "dependencies": {
+    "@gradio/atoms": "workspace:^",
+    "@gradio/statustracker": "workspace:^",
+    "@gradio/utils": "workspace:^"
+  }
+}

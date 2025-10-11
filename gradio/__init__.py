@@ -59,6 +59,7 @@ from gradio.components import (
 )
 from gradio.components.audio import WaveformOptions
 from gradio.components.image_editor import Brush, Eraser
+from gradio.components.headless import Headless
 from gradio.data_classes import FileData
 from gradio.events import (
     DeletedFileData,
