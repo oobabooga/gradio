@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 from gradio_client import media_data
-from huggingface_hub import HfFolder
+from huggingface_hub import get_token
 
 import gradio as gr
 from gradio.context import Context
@@ -30,7 +30,7 @@ pytestmark = pytest.mark.flaky
 
 os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
 
-HF_TOKEN = os.getenv("HF_TOKEN") or HfFolder.get_token()
+HF_TOKEN = os.getenv("HF_TOKEN") or get_token()
 
 
 class TestLoadInterface:
@@ -325,7 +325,7 @@ class TestLoadInterface:
     def test_private_space_v4_sse_v1(self):
         io = gr.load(
             "spaces/gradio-tests/not-actually-private-spacev4-sse-v1",
-            hf_token=HfFolder.get_token(),
+            hf_token=get_token(),
         )
         try:
             output = io("abc")

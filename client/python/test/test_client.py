@@ -17,7 +17,7 @@ import pytest
 import uvicorn
 from fastapi import FastAPI
 from gradio.http_server import Server
-from huggingface_hub import HfFolder
+from huggingface_hub import get_token
 from huggingface_hub.utils import RepositoryNotFoundError
 
 from gradio_client import Client, handle_file
@@ -31,7 +31,7 @@ from gradio_client.utils import (
     StatusUpdate,
 )
 
-HF_TOKEN = os.getenv("HF_TOKEN") or HfFolder.get_token()
+HF_TOKEN = os.getenv("HF_TOKEN") or get_token()
 
 
 @contextmanager

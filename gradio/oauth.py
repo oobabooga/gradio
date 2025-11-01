@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 import fastapi
 from fastapi.responses import RedirectResponse
-from huggingface_hub import HfFolder, whoami
+from huggingface_hub import get_token, whoami
 
 from .utils import get_space
 
@@ -273,7 +273,7 @@ class OAuthToken:
 
 
 def _get_mocked_oauth_info() -> typing.Dict:
-    token = HfFolder.get_token()
+    token = get_token()
     if token is None:
         raise ValueError(
             "Your machine must be logged in to HF to debug a Gradio app locally. Please"
