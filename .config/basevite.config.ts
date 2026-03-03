@@ -23,6 +23,7 @@ const theme_token_path = join(
 
 const version = JSON.parse(readFileSync(version_path, { encoding: "utf-8" }))
 	.version.trim()
+	.replace(/\+.*$/, "")
 	.replace(/\./g, "-");
 
 //@ts-ignore

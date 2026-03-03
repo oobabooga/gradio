@@ -14,7 +14,7 @@ const theme_token_path = resolve(__dirname, "../theme/src/tokens.css");
 const version_raw = JSON.parse(
 	readFileSync(version_path, { encoding: "utf-8" })
 ).version.trim();
-const version = version_raw.replace(/\./g, "-");
+const version = version_raw.replace(/\+.*$/, "").replace(/\./g, "-");
 
 const client_version_path = resolve(
 	__dirname,
