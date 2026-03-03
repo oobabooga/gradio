@@ -7,9 +7,6 @@
   "author": "",
   "license": "Apache-2.0",
   "private": false,
-  "scripts": {
-    "build": "rollup -c ../../rollup.component.config.js -i Index.svelte"
-  },
   "dependencies": {
     "@gradio/atoms": "workspace:^",
     "@gradio/statustracker": "workspace:^",

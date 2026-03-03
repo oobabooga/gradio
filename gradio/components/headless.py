@@ -8,9 +8,9 @@ class Headless(Component):
     A headless component that calls a global JavaScript function with Python outputs
     without rendering any UI.
     """
-
-    EVENTS = []  # Changed: No events at all
-
+    
+    EVENTS = [Events.change]
+    
     def __init__(
         self,
         value: str | Callable | None = "",
@@ -37,9 +37,6 @@ class Headless(Component):
             value=value,
             **kwargs,
         )
-
-    def get_config(self):  # New: Pass callback to frontend
-        return {**super().get_config(), "callback": self.callback}
 
     def preprocess(self, payload: str | None) -> str | None:
         return payload
