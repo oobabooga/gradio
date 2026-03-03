@@ -1221,18 +1221,6 @@ importers:
         specifier: workspace:^
         version: link:../preview
 
-  js/headless:
-    dependencies:
-      '@gradio/atoms':
-        specifier: workspace:^
-        version: link:../atoms
-      '@gradio/statustracker':
-        specifier: workspace:^
-        version: link:../statustracker
-      '@gradio/utils':
-        specifier: workspace:^
-        version: link:../utils
-
   js/highlightedtext:
     dependencies:
       '@gradio/atoms':
