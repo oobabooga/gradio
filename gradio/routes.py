@@ -23,7 +23,6 @@ import secrets
 import time
 import traceback
 from pathlib import Path
-from queue import Empty as EmptyQueue
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -877,8 +876,12 @@ class App(FastAPI):
             async def sse_stream(request: fastapi.Request):
                 try:
                     last_heartbeat = time.perf_counter()
+                    get_task = None
+                    get_task_queue = None
                     while True:
                         if await request.is_disconnected():
+                            if get_task is not None:
+                                get_task.cancel()
                             await blocks._queue.clean_events(session_hash=session_hash)
                             return
 
@@ -892,22 +895,24 @@ class App(FastAPI):
                             )
 
                         heartbeat_rate = 15
-                        check_rate = 0.05
+                        messages = blocks._queue.pending_messages_per_session[
+                            session_hash
+                        ]
                         message = None
-                        try:
-                            messages = blocks._queue.pending_messages_per_session[
-                                session_hash
-                            ]
-                            message = messages.get_nowait()
-                        except EmptyQueue:
-                            await asyncio.sleep(check_rate)
-                            if time.perf_counter() - last_heartbeat > heartbeat_rate:
-                                # Fix this
-                                message = HeartbeatMessage()
-                                # Need to reset last_heartbeat with perf_counter
-                                # otherwise only a single hearbeat msg will be sent
-                                # and then the stream will retry leading to infinite queue 😬
-                                last_heartbeat = time.perf_counter()
+                        if get_task is None or get_task_queue is not messages:
+                            if get_task is not None:
+                                get_task.cancel()
+                            get_task = asyncio.ensure_future(messages.get())
+                            get_task_queue = messages
+                        done, _ = await asyncio.wait({get_task}, timeout=1.0)
+                        if done:
+                            message = get_task.result()
+                            get_task = None
+                            get_task_queue = None
+                            last_heartbeat = time.perf_counter()
+                        elif time.perf_counter() - last_heartbeat > heartbeat_rate:
+                            message = HeartbeatMessage()
+                            last_heartbeat = time.perf_counter()
 
                         if blocks._queue.stopped:
                             message = UnexpectedErrorMessage(
@@ -940,8 +945,12 @@ class App(FastAPI):
                                     response = process_msg(message)
                                     if response is not None:
                                         yield response
+                                    if get_task is not None:
+                                        get_task.cancel()
                                     return
                 except BaseException as e:
+                    if get_task is not None:
+                        get_task.cancel()
                     message = UnexpectedErrorMessage(
                         message=str(e),
                     )

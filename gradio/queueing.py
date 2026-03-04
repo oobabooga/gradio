@@ -4,11 +4,11 @@ import asyncio
 import copy
 import os
 import random
+import threading
 import time
 import traceback
 import uuid
 from collections import defaultdict
-from queue import Queue as ThreadQueue
 from typing import TYPE_CHECKING
 
 import fastapi
@@ -94,7 +94,7 @@ class Queue:
         blocks: Blocks,
         default_concurrency_limit: int | None | Literal["not_set"] = "not_set",
     ):
-        self.pending_messages_per_session: LRUCache[str, ThreadQueue[EventMessage]] = (
+        self.pending_messages_per_session: LRUCache[str, asyncio.Queue[EventMessage]] = (
             LRUCache(2000)
         )
         self.pending_event_ids_session: dict[str, set[str]] = {}
@@ -120,8 +120,12 @@ class Queue:
             default_concurrency_limit
         )
         self.event_analytics: dict[str, dict[str, float | str | None]] = {}
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._loop_thread_id: int | None = None
 
     def start(self):
+        self._loop = asyncio.get_event_loop()
+        self._loop_thread_id = threading.current_thread().ident
         self.active_jobs = [None] * self.max_thread_count
 
         run_coro_in_background(self.start_processing)
@@ -162,7 +166,10 @@ class Queue:
             return
         event_message.event_id = event._id
         messages = self.pending_messages_per_session[event.session_hash]
-        messages.put_nowait(event_message)
+        if self._loop is not None and self._loop.is_running() and threading.current_thread().ident != self._loop_thread_id:
+            self._loop.call_soon_threadsafe(messages.put_nowait, event_message)
+        else:
+            messages.put_nowait(event_message)
 
     def _resolve_concurrency_limit(
         self, default_concurrency_limit: int | None | Literal["not_set"]
@@ -222,7 +229,7 @@ class Queue:
             body.session_hash = event.session_hash
         async with self.pending_message_lock:
             if body.session_hash not in self.pending_messages_per_session:
-                self.pending_messages_per_session[body.session_hash] = ThreadQueue()
+                self.pending_messages_per_session[body.session_hash] = asyncio.Queue()
             if body.session_hash not in self.pending_event_ids_session:
                 self.pending_event_ids_session[body.session_hash] = set()
         self.pending_event_ids_session[body.session_hash].add(event._id)
