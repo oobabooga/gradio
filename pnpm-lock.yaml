@@ -580,6 +580,9 @@ importers:
       '@gradio/group':
         specifier: workspace:^
         version: link:../group
+      '@gradio/headless':
+        specifier: workspace:^
+        version: link:../headless
       '@gradio/highlightedtext':
         specifier: workspace:^
         version: link:../highlightedtext
@@ -1220,6 +1223,8 @@ importers:
       '@gradio/preview':
         specifier: workspace:^
         version: link:../preview
+
+  js/headless: {}
 
   js/highlightedtext:
     dependencies:
