@@ -47,6 +47,7 @@
 		"@gradio/form": "workspace:^",
 		"@gradio/gallery": "workspace:^",
 		"@gradio/group": "workspace:^",
+		"@gradio/headless": "workspace:^",
 		"@gradio/highlightedtext": "workspace:^",
 		"@gradio/html": "workspace:^",
 		"@gradio/icons": "workspace:^",

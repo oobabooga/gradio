@@ -26,6 +26,7 @@ from gradio.components.fallback import Fallback
 from gradio.components.file import File
 from gradio.components.file_explorer import FileExplorer
 from gradio.components.gallery import Gallery
+from gradio.components.headless import Headless
 from gradio.components.highlighted_text import HighlightedText
 from gradio.components.html import HTML
 from gradio.components.image import Image
@@ -81,6 +82,7 @@ __all__ = [
     "Form",
     "FormComponent",
     "Gallery",
+    "Headless",
     "HTML",
     "FileExplorer",
     "Image",

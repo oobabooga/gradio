@@ -31,6 +31,7 @@ from gradio.components import (
     File,
     FileExplorer,
     Gallery,
+    Headless,
     Highlight,
     HighlightedText,
     Highlightedtext,
