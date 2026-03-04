@@ -48,6 +48,23 @@
 	}
 
 	const _component = wrap(component);
+
+	let cached_rest: Record<string, any> = {};
+	$: {
+		const rest = $$restProps;
+		let changed = Object.keys(rest).length !== Object.keys(cached_rest).length;
+		if (!changed) {
+			for (const k in rest) {
+				if (rest[k] !== cached_rest[k]) {
+					changed = true;
+					break;
+				}
+			}
+		}
+		if (changed) {
+			cached_rest = rest;
+		}
+	}
 </script>
 
 <svelte:component
@@ -58,7 +75,7 @@
 	{elem_id}
 	{elem_classes}
 	{target}
-	{...$$restProps}
+	{...cached_rest}
 	{theme_mode}
 	{root}
 	{gradio}

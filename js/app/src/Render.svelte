@@ -68,6 +68,23 @@
 		formatter,
 		client
 	);
+
+	let spread_props: Record<string, any> = {};
+	$: {
+		const { value, ...rest } = node.props;
+		let changed = Object.keys(rest).length !== Object.keys(spread_props).length;
+		if (!changed) {
+			for (const k in rest) {
+				if (rest[k] !== spread_props[k]) {
+					changed = true;
+					break;
+				}
+			}
+		}
+		if (changed) {
+			spread_props = rest;
+		}
+	}
 </script>
 
 <RenderComponent
@@ -79,7 +96,7 @@
 		`component-${node.id}`}
 	elem_classes={("elem_classes" in node.props && node.props.elem_classes) || []}
 	{target}
-	{...node.props}
+	{...spread_props}
 	{theme_mode}
 	{root}
 	gradio={gradio_class}
