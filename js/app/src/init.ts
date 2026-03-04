@@ -581,6 +581,8 @@ export function preload_all_components(
 	let constructor_map: Map<ComponentMeta["type"], LoadingComponent> = new Map();
 
 	components.forEach((c) => {
+		const key = c.component_class_id || c.type;
+		if (constructor_map.has(key)) return;
 		const { component, example_components } = get_component(
 			c.type,
 			c.component_class_id,
