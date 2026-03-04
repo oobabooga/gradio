@@ -191,7 +191,15 @@
 						}
 					}
 
-					document.head.appendChild(newElement);
+					if (newElement.tagName === "SCRIPT" && newElement.getAttribute("src")) {
+						await new Promise<void>((resolve, reject) => {
+							newElement.onload = () => resolve();
+							newElement.onerror = () => reject(new Error(`Failed to load script: ${newElement.getAttribute("src")}`));
+							document.head.appendChild(newElement);
+						});
+					} else {
+						document.head.appendChild(newElement);
+					}
 				}
 			}
 		}
