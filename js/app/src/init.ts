@@ -282,27 +282,33 @@ export function create_components(): {
 	}
 
 	function flush(): void {
-		layout_store.update((layout) => {
-			for (let i = 0; i < pending_updates.length; i++) {
-				for (let j = 0; j < pending_updates[i].length; j++) {
-					const update = pending_updates[i][j];
-					if (!update) continue;
-					const instance = instance_map[update.id];
-					if (!instance) continue;
-					let new_value;
-					if (update.value instanceof Map) new_value = new Map(update.value);
-					else if (update.value instanceof Set)
-						new_value = new Set(update.value);
-					else if (Array.isArray(update.value)) new_value = [...update.value];
-					else if (update.value === null) new_value = null;
-					else if (typeof update.value === "object")
-						new_value = { ...update.value };
-					else new_value = update.value;
-					instance.props[update.prop] = new_value;
+		let needs_layout_update = false;
+
+		for (let i = 0; i < pending_updates.length; i++) {
+			for (let j = 0; j < pending_updates[i].length; j++) {
+				const update = pending_updates[i][j];
+				if (!update) continue;
+				const instance = instance_map[update.id];
+				if (!instance) continue;
+				let new_value;
+				if (update.value instanceof Map) new_value = new Map(update.value);
+				else if (update.value instanceof Set)
+					new_value = new Set(update.value);
+				else if (Array.isArray(update.value)) new_value = [...update.value];
+				else if (update.value === null) new_value = null;
+				else if (typeof update.value === "object")
+					new_value = { ...update.value };
+				else new_value = update.value;
+				instance.props[update.prop] = new_value;
+				if (update.prop !== "value") {
+					needs_layout_update = true;
 				}
 			}
-			return layout;
-		});
+		}
+
+		if (needs_layout_update) {
+			layout_store.update((layout) => layout);
+		}
 
 		pending_updates = [];
 		update_scheduled = false;
