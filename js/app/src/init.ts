@@ -274,7 +274,9 @@ export function create_components(): {
 	function store_keyed_values(components: ComponentMeta[]): void {
 		components.forEach((c) => {
 			if (c.key != null) {
-				keyed_component_values[c.key] = c.props.value;
+				keyed_component_values[c.key] = c.instance?.value !== undefined
+					? c.instance.value
+					: c.props.value;
 			}
 		});
 	}
@@ -325,6 +327,9 @@ export function create_components(): {
 		}
 		if (comp.instance.get_value) {
 			return comp.instance.get_value() as Promise<any>;
+		}
+		if (comp.instance.value !== undefined) {
+			return comp.instance.value;
 		}
 		return comp.props.value;
 	}

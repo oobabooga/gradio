@@ -37,6 +37,7 @@
 					};
 				}
 				props.forEach((v) => {
+					if (v === "value") return;
 					binding_callbacks.push(() => bind(instance, v, report(v)));
 				});
 
