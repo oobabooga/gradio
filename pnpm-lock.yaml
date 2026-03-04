@@ -1224,7 +1224,11 @@ importers:
         specifier: workspace:^
         version: link:../preview
 
-  js/headless: {}
+  js/headless:
+    dependencies:
+      '@gradio/utils':
+        specifier: workspace:^
+        version: link:../utils
 
   js/highlightedtext:
     dependencies:
