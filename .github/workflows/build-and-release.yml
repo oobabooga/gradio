@@ -60,23 +60,19 @@ jobs:
       - name: Build Gradio Wheels
         run: hatch build
 
-      # Step 10: Create or update the GitHub Release
-      - name: Create or Update GitHub Release
+      # Step 10: Create a versioned GitHub Release
+      - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: custom-build
         run: |
-          # Create the release if it doesn't exist (ignore error if it does)
-          gh release create $TAG_NAME \
-            --title "Custom Gradio Build (Latest)" \
-            --notes "Latest custom build. Current versions: Gradio ${{ env.GRADIO_VERSION }}, Client ${{ env.CLIENT_VERSION }}" \
-            || echo "Release already exists, will update it."
+          gh release create "${{ env.GRADIO_VERSION }}" \
+            --title "Gradio ${{ env.GRADIO_VERSION }}" \
+            --notes "Gradio ${{ env.GRADIO_VERSION }}, Client ${{ env.CLIENT_VERSION }}"
 
-      # Step 11: Upload wheels to the release (--clobber replaces existing files)
+      # Step 11: Upload wheels to the release
       - name: Upload Wheels to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: custom-build
         run: |
-          gh release upload $TAG_NAME dist/*.whl --clobber
-          gh release upload $TAG_NAME client/python/dist/*.whl --clobber
+          gh release upload "${{ env.GRADIO_VERSION }}" dist/*.whl
+          gh release upload "${{ env.GRADIO_VERSION }}" client/python/dist/*.whl
