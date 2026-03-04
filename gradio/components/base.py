@@ -146,7 +146,12 @@ class Component(ComponentBase, Block):
         key: int | str | None = None,
         load_fn: Callable | None = None,
         every: float | None = None,
+        **kwargs,
     ):
+        if kwargs:
+            for k in kwargs:
+                warnings.warn(f"Unexpected keyword argument '{k}' for {type(self).__name__}, ignoring.", UserWarning, stacklevel=2)
+
         self.server_fns = [
             getattr(self, value)
             for value in dir(self.__class__)

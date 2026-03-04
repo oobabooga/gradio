@@ -28,7 +28,6 @@ from gradio_client import utils as client_utils
 from gradio_client.documentation import document
 
 from gradio import (
-    analytics,
     components,
     networking,
     processing_utils,
@@ -961,8 +960,8 @@ class Blocks(BlockContext, BlocksEvents, metaclass=BlocksMeta):
         """
         Parameters:
             theme: A Theme object or a string representing a theme. If a string, will look for a built-in theme with that name (e.g. "soft" or "default"), or will attempt to load a theme from the Hugging Face Hub (e.g. "gradio/monochrome"). If None, will use the Default theme.
-            analytics_enabled: Whether to allow basic telemetry. If None, will use GRADIO_ANALYTICS_ENABLED environment variable or default to True.
-            mode: A human-friendly name for the kind of Blocks or Interface being created. Used internally for analytics.
+            analytics_enabled: Deprecated, has no effect. Analytics are disabled.
+            mode: A human-friendly name for the kind of Blocks or Interface being created.
             title: The tab title to display when this is opened in a browser window.
             css: Custom css as a string or path to a css file. This css will be included in the demo webpage.
             js: Custom js as a string or path to a js file. The custom js should be in the form of a single js function. This function will automatically be executed when the page loads. For more flexibility, use the head parameter to insert js inside <script> tags.
@@ -1015,19 +1014,7 @@ class Blocks(BlockContext, BlocksEvents, metaclass=BlocksMeta):
         self.renderables: list[Renderable] = []
         self.state_holder: StateHolder
 
-        # For analytics_enabled and allow_flagging: (1) first check for
-        # parameter, (2) check for env variable, (3) default to True/"manual"
-        self.analytics_enabled = (
-            analytics_enabled
-            if analytics_enabled is not None
-            else analytics.analytics_enabled()
-        )
-        if self.analytics_enabled:
-            if not wasm_utils.IS_WASM:
-                t = threading.Thread(target=analytics.version_check)
-                t.start()
-        else:
-            os.environ["HF_HUB_DISABLE_TELEMETRY"] = "True"
+        self.analytics_enabled = False
 
         self.default_config = BlocksConfig(self)
         super().__init__(render=False, **kwargs)
@@ -1063,20 +1050,6 @@ class Blocks(BlockContext, BlocksEvents, metaclass=BlocksMeta):
         self.blocked_paths = []
         self.root_path = os.environ.get("GRADIO_ROOT_PATH", "")
         self.proxy_urls = set()
-
-        if self.analytics_enabled:
-            is_custom_theme = not any(
-                self.theme.to_dict() == built_in_theme.to_dict()
-                for built_in_theme in BUILT_IN_THEMES.values()
-            )
-            data = {
-                "mode": self.mode,
-                "custom_css": self.css is not None,
-                "theme": self.theme.name,
-                "is_custom_theme": is_custom_theme,
-                "version": get_package_version(),
-            }
-            analytics.initiated_analytics(data)
 
         self.queue()
 
@@ -2351,9 +2324,11 @@ Received outputs:
             )
             if not wasm_utils.IS_WASM and not self.is_colab and not quiet:
                 print(
-                    strings.en["RUNNING_LOCALLY_SEPARATED"].format(
+                    "\n"
+                    + strings.en["RUNNING_LOCALLY_SEPARATED"].format(
                         self.protocol, self.server_name, self.server_port
-                    )
+                    ).strip()
+                    + "\n"
                 )
 
             self._queue.set_server_app(self.server_app)
@@ -2373,7 +2348,6 @@ Received outputs:
                 # So we need to manually cancel them. See `self.close()`..
                 self.startup_events()
 
-        utils.launch_counter()
         self.is_sagemaker = utils.sagemaker_check()
         if share is None:
             if self.is_colab:
@@ -2403,6 +2377,13 @@ Received outputs:
                     self.share = True
         else:
             self.share = share
+
+        if not self.share and self.server_name in (None, "127.0.0.1", "localhost"):
+            from starlette.middleware.trustedhost import TrustedHostMiddleware
+            self.app.add_middleware(
+                TrustedHostMiddleware,
+                allowed_hosts=["localhost", "127.0.0.1"]
+            )
 
         if enable_monitoring:
             print(
@@ -2458,8 +2439,6 @@ Received outputs:
                 if not (quiet):
                     print(strings.en["SHARE_LINK_MESSAGE"])
             except (RuntimeError, httpx.ConnectError):
-                if self.analytics_enabled:
-                    analytics.error_analytics("Not able to set up tunnel")
                 self.share_url = None
                 self.share = False
                 if Path(BINARY_PATH).exists():
@@ -2474,8 +2453,6 @@ Received outputs:
                         )
                     )
         else:
-            if not quiet and not wasm_utils.IS_WASM:
-                print(strings.en["PUBLIC_SHARE_TRUE"])
             self.share_url = None
 
         if inbrowser and not wasm_utils.IS_WASM:
@@ -2539,16 +2516,6 @@ Received outputs:
                 display(artifact)
             except ImportError:
                 pass
-
-        if getattr(self, "analytics_enabled", False):
-            data = {
-                "launch_method": "browser" if inbrowser else "inline",
-                "is_google_colab": self.is_colab,
-                "is_sharing_on": self.share,
-                "is_space": self.space_id is not None,
-                "mode": self.mode,
-            }
-            analytics.launched_analytics(self, data)
 
         is_in_interactive_mode = bool(getattr(sys, "ps1", sys.flags.interactive))
 
@@ -2622,10 +2589,6 @@ Received outputs:
                 mlflow.log_param("Gradio Interface Share Link", self.share_url)
             else:
                 mlflow.log_param("Gradio Interface Local Link", self.local_url)
-        if self.analytics_enabled and analytics_integration:
-            data = {"integration": analytics_integration}
-            analytics.integration_analytics(data)
-
     def close(self, verbose: bool = True) -> None:
         """
         Closes the Interface that was launched and frees the port.

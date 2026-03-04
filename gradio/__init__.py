@@ -112,3 +112,5 @@ if not IS_WASM:
     from gradio.ipython_ext import load_ipython_extension
 
 __version__ = get_package_version()
+
+Box = Group

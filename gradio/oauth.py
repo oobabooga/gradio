@@ -9,7 +9,12 @@ from dataclasses import dataclass, field
 
 import fastapi
 from fastapi.responses import RedirectResponse
-from huggingface_hub import HfFolder, whoami
+from huggingface_hub import whoami
+try:
+    from huggingface_hub import HfFolder
+except ImportError:
+    from huggingface_hub import get_token
+    HfFolder = type('HfFolder', (), {'get_token': staticmethod(get_token)})
 
 from .utils import get_space
 

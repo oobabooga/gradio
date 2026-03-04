@@ -12,7 +12,6 @@ from tomlkit import dump, parse
 from typing_extensions import Annotated
 
 import gradio
-from gradio.analytics import custom_component_analytics
 from gradio.cli.commands.components._docs_utils import (
     get_deep,
 )
@@ -43,15 +42,6 @@ def _build(
         ),
     ] = None,
 ):
-    custom_component_analytics(
-        "build",
-        None,
-        None,
-        None,
-        None,
-        generate_docs=generate_docs,
-        bump_version=bump_version,
-    )
     name = Path(path).resolve()
     if not (name / "pyproject.toml").exists():
         raise ValueError(f"Cannot find pyproject.toml file in {name}")

@@ -61,6 +61,7 @@ class Video(Component):
         | Callable
         | None = None,
         *,
+        source: str | None = None,
         format: str | None = None,
         sources: list[Literal["upload", "webcam"]] | None = None,
         height: int | str | None = None,
@@ -112,6 +113,8 @@ class Video(Component):
             min_length: The minimum length of video (in seconds) that the user can pass into the prediction function. If None, there is no minimum length.
             max_length: The maximum length of video (in seconds) that the user can pass into the prediction function. If None, there is no maximum length.
         """
+        if source is not None and sources is None:
+            sources = [source]
         valid_sources: list[Literal["upload", "webcam"]] = ["upload", "webcam"]
         if sources is None:
             self.sources = valid_sources

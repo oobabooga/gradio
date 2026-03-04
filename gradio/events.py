@@ -68,7 +68,7 @@ class Dependency(dict):
     def __init__(self, trigger, key_vals, dep_index, fn):
         super().__init__(key_vals)
         self.fn = fn
-        self.then = partial(
+        _original_then = partial(
             EventListener(
                 "then",
                 trigger_after=dep_index,
@@ -77,10 +77,15 @@ class Dependency(dict):
             ).listener,
             trigger,
         )
+        def _then_with_js(*args, _js=None, **kwargs):
+            if _js is not None:
+                kwargs['js'] = _js
+            return _original_then(*args, **kwargs)
+        self.then = _then_with_js
         """
         Triggered after directly preceding event is completed, regardless of success or failure.
         """
-        self.success = partial(
+        _original_success = partial(
             EventListener(
                 "success",
                 trigger_after=dep_index,
@@ -89,6 +94,11 @@ class Dependency(dict):
             ).listener,
             trigger,
         )
+        def _success_with_js(*args, _js=None, **kwargs):
+            if _js is not None:
+                kwargs['js'] = _js
+            return _original_success(*args, **kwargs)
+        self.success = _success_with_js
         """
         Triggered after directly preceding event is completed, if it was successful.
         """
@@ -383,6 +393,7 @@ class EventListener(str):
             concurrency_limit: int | None | Literal["default"] = "default",
             concurrency_id: str | None = None,
             show_api: bool = True,
+            _js: str | None = None,
         ) -> Dependency:
             """
             Parameters:
@@ -405,6 +416,8 @@ class EventListener(str):
                 concurrency_id: If set, this is the id of the concurrency group. Events with the same concurrency_id will be limited by the lowest set concurrency_limit.
                 show_api: whether to show this event in the "view API" page of the Gradio app, or in the ".view_api()" method of the Gradio clients. Unlike setting api_name to False, setting show_api to False will still allow downstream apps as well as the Clients to use this event. If fn is None, show_api will automatically be set to False.
             """
+            if _js is not None:
+                js = _js
 
             if fn == "decorator":
 

@@ -75,6 +75,7 @@ class Audio(
         self,
         value: str | Path | tuple[int, np.ndarray] | Callable | None = None,
         *,
+        source: str | None = None,
         sources: list[Literal["upload", "microphone"]] | None = None,
         type: Literal["numpy", "filepath"] = "numpy",
         label: str | None = None,
@@ -126,6 +127,8 @@ class Audio(
             max_length: The maximum length of audio (in seconds) that the user can pass into the prediction function. If None, there is no maximum length.
             waveform_options: A dictionary of options for the waveform display. Options include: waveform_color (str), waveform_progress_color (str), show_controls (bool), skip_length (int), trim_region_color (str). Default is None, which uses the default values for these options. [See `gr.WaveformOptions` docs](#waveform-options).
         """
+        if source is not None and sources is None:
+            sources = [source]
         valid_sources: list[Literal["upload", "microphone"]] = ["upload", "microphone"]
         if sources is None:
             self.sources = ["microphone"] if streaming else valid_sources

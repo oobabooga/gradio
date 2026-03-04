@@ -16,8 +16,6 @@ from tomlkit import parse
 from typer import Argument, Option
 from typing_extensions import Annotated
 
-from gradio.analytics import custom_component_analytics
-
 colors = ["red", "yellow", "green", "blue", "indigo", "purple", "pink", "gray"]
 
 PYPI_REGISTER_URL = "https://pypi.org/account/register/"
@@ -88,13 +86,6 @@ def _publish(
         ),
     ] = False,
 ):
-    custom_component_analytics(
-        "publish",
-        None,
-        upload_demo=upload_demo,
-        upload_pypi=upload_pypi,
-        upload_source=upload_source,
-    )
     console = Console()
     dist_dir = dist_dir.resolve()
 

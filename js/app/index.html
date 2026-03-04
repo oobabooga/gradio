@@ -31,11 +31,9 @@
 				font-family: Arial, Helvetica, sans-serif;
 			}
 
-			@media (prefers-color-scheme: dark) {
-				body {
-					background: var(--bg-dark);
-					color: var(--col-dark);
-				}
+			body.dark {
+				background: var(--bg-dark);
+				color: var(--col-dark);
 			}
 		</style>
 
@@ -59,9 +57,6 @@
 
 		<script data-gradio-mode>
 			window.__gradio_mode__ = "app";
-			window.iFrameResizer = {
-				heightCalculationMethod: "taggedElement"
-			};
 			window.parent?.postMessage(
 				{ type: "SET_SCROLLING", enabled: false },
 				"*"
@@ -70,16 +65,6 @@
 
 		%gradio_config%%gradio_api_info%
 
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link
-			rel="preconnect"
-			href="https://fonts.gstatic.com"
-			crossorigin="anonymous"
-		/>
-		<script
-			src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.1/iframeResizer.contentWindow.min.js"
-			async
-		></script>
 	</head>
 
 	<body
