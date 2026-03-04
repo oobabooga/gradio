@@ -2276,6 +2276,15 @@ Received outputs:
             self, auth_dependency=auth_dependency, app_kwargs=app_kwargs
         )
 
+        # Add TrustedHostMiddleware before the server starts to prevent
+        # DNS rebinding attacks when running locally.
+        if not share and server_name in (None, "127.0.0.1", "localhost"):
+            from starlette.middleware.trustedhost import TrustedHostMiddleware
+            self.app.add_middleware(
+                TrustedHostMiddleware,
+                allowed_hosts=["localhost", "127.0.0.1"]
+            )
+
         if self.is_running:
             if not isinstance(self.local_url, str):
                 raise ValueError(f"Invalid local_url: {self.local_url}")
@@ -2381,13 +2390,6 @@ Received outputs:
                     self.share = True
         else:
             self.share = share
-
-        if not self.share and self.server_name in (None, "127.0.0.1", "localhost"):
-            from starlette.middleware.trustedhost import TrustedHostMiddleware
-            self.app.add_middleware(
-                TrustedHostMiddleware,
-                allowed_hosts=["localhost", "127.0.0.1"]
-            )
 
         if enable_monitoring:
             print(
