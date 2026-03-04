@@ -91,7 +91,7 @@
 	_id={node.id}
 	component={node.component}
 	bind:instance={node.instance}
-	bind:value={node.props.value}
+	value={node.props.value}
 	elem_id={("elem_id" in node.props && node.props.elem_id) ||
 		`component-${node.id}`}
 	elem_classes={("elem_classes" in node.props && node.props.elem_classes) || []}
