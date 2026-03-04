@@ -206,44 +206,13 @@
 	}
 
 	function handle_theme_mode(target: HTMLDivElement): "light" | "dark" {
-		const force_light = window.__gradio_mode__ === "website";
-
-		let new_theme_mode: ThemeMode;
-		if (force_light) {
-			new_theme_mode = "light";
-		} else {
-			const url = new URL(window.location.toString());
-			const url_color_mode: ThemeMode | null = url.searchParams.get(
-				"__theme"
-			) as ThemeMode | null;
-			new_theme_mode = theme_mode || url_color_mode || "system";
-		}
-
-		if (new_theme_mode === "dark" || new_theme_mode === "light") {
-			apply_theme(target, new_theme_mode);
-		} else {
-			new_theme_mode = sync_system_theme(target);
-		}
-		return new_theme_mode;
-	}
-
-	function sync_system_theme(target: HTMLDivElement): "light" | "dark" {
-		const theme = update_scheme();
-		window
-			?.matchMedia("(prefers-color-scheme: dark)")
-			?.addEventListener("change", update_scheme);
-
-		function update_scheme(): "light" | "dark" {
-			let _theme: "light" | "dark" = window?.matchMedia?.(
-				"(prefers-color-scheme: dark)"
-			).matches
-				? "dark"
-				: "light";
-
-			apply_theme(target, _theme);
-			return _theme;
-		}
-		return theme;
+		const url = new URL(window.location.toString());
+		const url_color_mode = url.searchParams.get("__theme") as "light" | "dark" | null;
+		const saved_theme = localStorage.getItem("theme") as "light" | "dark" | null;
+		const config_theme = (window as any).gradio_config?.dark_theme ? "dark" : "light";
+		const mode = url_color_mode || saved_theme || config_theme;
+		apply_theme(target, mode);
+		return mode;
 	}
 
 	function apply_theme(target: HTMLDivElement, theme: "dark" | "light"): void {
