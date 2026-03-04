@@ -42,7 +42,7 @@
 	let upload_component: Upload;
 	let hidden_upload: HTMLInputElement;
 	let el: HTMLTextAreaElement | HTMLInputElement;
-	let can_scroll: boolean;
+	let can_scroll = false;
 	let previous_scroll_top = 0;
 	let user_has_scrolled_up = false;
 	let dragging = false;
@@ -85,14 +85,10 @@
 	}>();
 
 	beforeUpdate(() => {
-		can_scroll = el && el.offsetHeight + el.scrollTop > el.scrollHeight - 100;
-	});
-
-	const scroll = (): void => {
-		if (can_scroll && autoscroll && !user_has_scrolled_up) {
-			el.scrollTo(0, el.scrollHeight);
+		if (autoscroll && !user_has_scrolled_up && el) {
+			can_scroll = el.offsetHeight + el.scrollTop > el.scrollHeight - 100;
 		}
-	};
+	});
 
 	async function handle_change(): Promise<void> {
 		dispatch("change", value);
@@ -105,8 +101,8 @@
 		if (autofocus && el !== null) {
 			el.focus();
 		}
-		if (can_scroll && autoscroll) {
-			scroll();
+		if (can_scroll && autoscroll && !user_has_scrolled_up) {
+			el.scrollTo(0, el.scrollHeight);
 		}
 		value_is_output = false;
 	});

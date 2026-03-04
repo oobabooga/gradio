@@ -11,16 +11,11 @@ export async function resize(
 	lines: number,
 	max_lines: number
 ): Promise<void> {
-	await tick();
 	if (lines === max_lines) return;
+	await tick();
 
-	let max =
-		max_lines === undefined
-			? false
-			: max_lines === undefined // default
-				? 21 * 11
-				: 21 * (max_lines + 1);
-	let min = 21 * (lines + 1);
+	const max = max_lines === undefined ? false : 21 * (max_lines + 1);
+	const min = 21 * (lines + 1);
 
 	target.style.height = "1px";
 
@@ -42,17 +37,8 @@ export function text_area_resize(
 ): any | undefined {
 	if (_value.lines === _value.max_lines) return;
 	_el.style.overflowY = "scroll";
-	_el.addEventListener("input", (event: Event) =>
-		resize(event.target as HTMLTextAreaElement, _value.lines, _value.max_lines)
-	);
 
-	if (!_value.text.trim()) return;
-	resize(_el, _value.lines, _value.max_lines);
-
-	return {
-		destroy: () =>
-			_el.removeEventListener("input", (e: Event) =>
-				resize(e.target as HTMLTextAreaElement, _value.lines, _value.max_lines)
-			)
-	};
+	if (_value.text.trim()) {
+		resize(_el, _value.lines, _value.max_lines);
+	}
 }

@@ -30,11 +30,17 @@
 	let el: HTMLTextAreaElement | HTMLInputElement;
 	let copied = false;
 	let timer: NodeJS.Timeout;
-	let can_scroll: boolean;
 	let previous_scroll_top = 0;
 	let user_has_scrolled_up = false;
+	let can_scroll = false;
 
-	$: value, el && lines !== max_lines && resize({ target: el });
+	$: value, do_resize();
+
+	beforeUpdate(() => {
+		if (autoscroll && !user_has_scrolled_up && el) {
+			can_scroll = el.offsetHeight + el.scrollTop > el.scrollHeight - 100;
+		}
+	});
 
 	$: if (value === null) value = "";
 
@@ -47,16 +53,6 @@
 		focus: undefined;
 	}>();
 
-	beforeUpdate(() => {
-		can_scroll = el && el.offsetHeight + el.scrollTop > el.scrollHeight - 100;
-	});
-
-	const scroll = (): void => {
-		if (can_scroll && autoscroll && !user_has_scrolled_up) {
-			el.scrollTo(0, el.scrollHeight);
-		}
-	};
-
 	function handle_change(): void {
 		dispatch("change", value);
 		if (!value_is_output) {
@@ -67,8 +63,8 @@
 		if (autofocus) {
 			el.focus();
 		}
-		if (can_scroll && autoscroll) {
-			scroll();
+		if (can_scroll && autoscroll && !user_has_scrolled_up) {
+			el.scrollTo(0, el.scrollHeight);
 		}
 		value_is_output = false;
 	});
@@ -132,33 +128,26 @@
 		}
 	}
 
-	async function resize(
-		event: Event | { target: HTMLTextAreaElement | HTMLInputElement }
-	): Promise<void> {
+	async function do_resize(): Promise<void> {
+		if (lines === max_lines || !el) return;
 		await tick();
-		if (lines === max_lines) return;
+		if (!el) return;
 
-		let max =
-			max_lines === undefined
-				? false
-				: max_lines === undefined // default
-					? 21 * 11
-					: 21 * (max_lines + 1);
-		let min = 21 * (lines + 1);
+		const max = max_lines === undefined ? false : 21 * (max_lines + 1);
+		const min = 21 * (lines + 1);
 
-		const target = event.target as HTMLTextAreaElement;
-		target.style.height = "1px";
+		el.style.height = "1px";
 
 		let scroll_height;
-		if (max && target.scrollHeight > max) {
+		if (max && el.scrollHeight > max) {
 			scroll_height = max;
-		} else if (target.scrollHeight < min) {
+		} else if (el.scrollHeight < min) {
 			scroll_height = min;
 		} else {
-			scroll_height = target.scrollHeight;
+			scroll_height = el.scrollHeight;
 		}
 
-		target.style.height = `${scroll_height}px`;
+		el.style.height = `${scroll_height}px`;
 	}
 
 	function text_area_resize(
@@ -167,14 +156,10 @@
 	): any | undefined {
 		if (lines === max_lines) return;
 		_el.style.overflowY = "scroll";
-		_el.addEventListener("input", resize);
 
-		if (!_value.trim()) return;
-		resize({ target: _el });
-
-		return {
-			destroy: () => _el.removeEventListener("input", resize)
-		};
+		if (_value.trim()) {
+			do_resize();
+		}
 	}
 </script>
 
