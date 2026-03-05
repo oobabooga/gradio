@@ -80,8 +80,6 @@
 			$selected_tab = id;
 			$selected_tab_index = tabs.findIndex((t) => t.id === id);
 			dispatch("change");
-		} else {
-			console.warn("Attempted to select a non-interactive or hidden tab.");
 		}
 	}
 
