@@ -521,7 +521,7 @@
 				const deps = $targets[id]?.[event];
 
 				deps?.forEach((dep_id) => {
-					queueMicrotask(() => {
+					requestAnimationFrame(() => {
 						wait_then_trigger_api_call(dep_id, id, data);
 					});
 				});
