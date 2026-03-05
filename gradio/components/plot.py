@@ -120,13 +120,16 @@ class Plot(Component):
         Returns:
             PlotData: A dataclass containing the plot data as a JSON string, as well as the type of chart and the plotting library.
         """
-        import matplotlib.figure
-
         if value is None:
             return None
         if isinstance(value, PlotData):
             return value
-        if isinstance(value, (ModuleType, matplotlib.figure.Figure)):  # type: ignore
+        try:
+            import matplotlib.figure
+            is_matplotlib = isinstance(value, matplotlib.figure.Figure)
+        except ImportError:
+            is_matplotlib = False
+        if isinstance(value, ModuleType) or is_matplotlib:
             dtype = "matplotlib"
             out_y = processing_utils.encode_plot_to_base64(value, self.format)
         elif "bokeh" in value.__module__:

@@ -1013,8 +1013,13 @@ def make_waveform(
     Returns:
         A filepath to the output video in mp4 format.
     """
-    import matplotlib.pyplot as plt
-    from matplotlib.animation import FuncAnimation
+    try:
+        import matplotlib.pyplot as plt
+        from matplotlib.animation import FuncAnimation
+    except ImportError:
+        raise ImportError(
+            "matplotlib is required for make_waveform. Install it with: pip install matplotlib"
+        )
 
     if isinstance(audio, str):
         audio_file = audio
