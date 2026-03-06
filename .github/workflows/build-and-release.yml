@@ -62,7 +62,7 @@ jobs:
       - name: Build Gradio Wheels
         run: hatch build
 
-      # Step 10: Delete existing release if it exists, then create a new one
+      # Step 10: Delete existing release if it exists, then create a new one with wheels
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,12 +70,6 @@ jobs:
           gh release delete "${{ env.GRADIO_TAG }}" --yes --cleanup-tag || true
           gh release create "${{ env.GRADIO_TAG }}" \
             --title "Gradio ${{ env.GRADIO_VERSION }}" \
-            --notes "Gradio ${{ env.GRADIO_VERSION }}, Client ${{ env.CLIENT_VERSION }}"
-
-      # Step 11: Upload wheels to the release
-      - name: Upload Wheels to Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ env.GRADIO_TAG }}" dist/*.whl
-          gh release upload "${{ env.GRADIO_TAG }}" client/python/dist/*.whl
+            --notes "Gradio ${{ env.GRADIO_VERSION }}, Client ${{ env.CLIENT_VERSION }}" \
+            dist/*.whl \
+            client/python/dist/*.whl
