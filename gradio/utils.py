@@ -1001,12 +1001,17 @@ class TupleNoPrint(tuple):
 
 class MatplotlibBackendMananger:
     def __enter__(self):
-        import matplotlib
+        try:
+            import matplotlib
 
-        self._original_backend = matplotlib.get_backend()
-        matplotlib.use("agg")
+            self._original_backend = matplotlib.get_backend()
+            matplotlib.use("agg")
+        except ImportError:
+            self._original_backend = None
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._original_backend is None:
+            return
         import matplotlib
 
         matplotlib.use(self._original_backend)
