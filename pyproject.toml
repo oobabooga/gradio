@@ -83,6 +83,16 @@ artifacts = ["!gradio/templates", "!*.pyi", "!/gradio/test_data", "!/gradio/_fro
 directory = "dist-lite"
 dependencies = ["lite-builder @ {root:uri}/../.config/lite-builder"]
 
+[tool.hatch.build.targets.wheel]
+exclude = [
+  "gradio/templates/frontend/assets/*.js.map",
+  "gradio/templates/frontend/static/img/Bunny.obj",
+  "gradio/templates/frontend/static/img/Duck.glb",
+  "gradio/test_data",
+  "gradio/CHANGELOG.md",
+  "gradio/_frontend_code/plot/testplot.js",
+]
+
 [tool.hatch.build.targets.wheel.hooks.custom]
 path = ".config/copy_frontend.py"
 

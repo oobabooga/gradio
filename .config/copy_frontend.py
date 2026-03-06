@@ -33,6 +33,7 @@ def copy_js_code(root: str | pathlib.Path):
                         or ".test." in n
                         or ".stories." in n
                         or ".spec." in n
+                        or n == "test"
                     ):
                         ignored.append(n)
                 return ignored
@@ -46,7 +47,13 @@ def copy_js_code(root: str | pathlib.Path):
     shutil.copytree(
         str(pathlib.Path(root) / "client" / "js"),
         str(pathlib.Path("gradio") / "_frontend_code" / "client"),
-        ignore=lambda d, names: ["node_modules"],
+        ignore=lambda d, names: [
+            n for n in names
+            if n == "node_modules"
+            or n == "test"
+            or ".test." in n
+            or n.endswith(".map")
+        ],
         dirs_exist_ok=True,
     )
 
