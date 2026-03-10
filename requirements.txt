@@ -11,8 +11,8 @@ markupsafe~=2.0
 numpy>=1.0,<3.0
 orjson~=3.0
 packaging
-pandas>=1.0,<3.0
-pillow>=8.0,<11.0
+pandas>=1.0
+pillow>=8.0
 pydantic>=2.0
 python-multipart>=0.0.9  # required for fastapi forms
 pydub
