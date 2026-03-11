@@ -18,9 +18,13 @@
 	let dragging_index: number | null = null;
 	let drop_target: number | null = null;
 	let list_el: HTMLDivElement;
-	let scroll_interval: ReturnType<typeof setInterval> | null = null;
 
-	const SCROLL_SPEED = 8;
+	const SCROLL_EDGE = 40;
+	const SCROLL_MIN = 2;
+	const SCROLL_MAX = 16;
+
+	let scroll_speed = 0;
+	let scroll_raf: number | null = null;
 
 	function parse_value(val: string): string[] {
 		if (!val || !val.trim()) return [];
@@ -52,6 +56,7 @@
 			e.dataTransfer.setData("text/plain", String(index));
 		}
 		document.addEventListener("dragover", handle_document_drag_over);
+		start_scroll_loop();
 	}
 
 	function get_nearest_index(y: number): number {
@@ -64,28 +69,42 @@
 		return children.length - 1;
 	}
 
-	function stop_auto_scroll(): void {
-		if (scroll_interval !== null) {
-			clearInterval(scroll_interval);
-			scroll_interval = null;
+	function scroll_loop(): void {
+		if (scroll_speed !== 0) {
+			list_el.scrollTop += scroll_speed;
+		}
+		scroll_raf = requestAnimationFrame(scroll_loop);
+	}
+
+	function start_scroll_loop(): void {
+		if (scroll_raf === null) {
+			scroll_loop();
 		}
 	}
 
-	function start_auto_scroll(direction: number): void {
-		stop_auto_scroll();
-		scroll_interval = setInterval(() => {
-			list_el.scrollTop += direction;
-		}, 16);
+	function stop_scroll_loop(): void {
+		if (scroll_raf !== null) {
+			cancelAnimationFrame(scroll_raf);
+			scroll_raf = null;
+		}
+		scroll_speed = 0;
+	}
+
+	function get_scroll_speed(distance: number): number {
+		const t = Math.min(distance / 100, 1);
+		return SCROLL_MIN + t * (SCROLL_MAX - SCROLL_MIN);
 	}
 
 	function update_auto_scroll(client_y: number): void {
 		const rect = list_el.getBoundingClientRect();
-		if (client_y < rect.top) {
-			start_auto_scroll(-SCROLL_SPEED);
-		} else if (client_y > rect.bottom) {
-			start_auto_scroll(SCROLL_SPEED);
+		if (client_y < rect.top + SCROLL_EDGE) {
+			const distance = rect.top + SCROLL_EDGE - client_y;
+			scroll_speed = -get_scroll_speed(distance);
+		} else if (client_y > rect.bottom - SCROLL_EDGE) {
+			const distance = client_y - (rect.bottom - SCROLL_EDGE);
+			scroll_speed = get_scroll_speed(distance);
 		} else {
-			stop_auto_scroll();
+			scroll_speed = 0;
 		}
 	}
 
@@ -113,11 +132,15 @@
 		}
 	}
 
+	function cleanup_drag(): void {
+		stop_scroll_loop();
+		remove_document_listener();
+	}
+
 	function handle_list_drop(e: DragEvent): void {
 		if (disabled || dragging_index === null) return;
 		e.preventDefault();
-		stop_auto_scroll();
-		remove_document_listener();
+		cleanup_drag();
 
 		const target_index = drop_target;
 		drop_target = null;
@@ -144,14 +167,10 @@
 	function handle_drag_end(): void {
 		dragging_index = null;
 		drop_target = null;
-		stop_auto_scroll();
-		remove_document_listener();
+		cleanup_drag();
 	}
 
-	onDestroy(() => {
-		stop_auto_scroll();
-		remove_document_listener();
-	});
+	onDestroy(cleanup_drag);
 </script>
 
 <label class:container>
