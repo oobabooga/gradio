@@ -192,7 +192,7 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		padding: 6px 10px;
+		padding: var(--checkbox-label-padding);
 		border-radius: var(--radius-sm, 4px);
 		background: var(--block-background-fill);
 		border: 1px solid var(--border-color-primary);
