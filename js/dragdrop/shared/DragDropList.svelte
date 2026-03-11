@@ -16,9 +16,9 @@
 
 	let items: string[] = [];
 	let dragging_index: number | null = null;
-	let drag_over_index: number | null = null;
+	let drop_target: number | null = null;
+	let list_el: HTMLDivElement;
 
-	// Parse value string into items array
 	function parse_value(val: string): string[] {
 		if (!val || !val.trim()) return [];
 		return val
@@ -28,12 +28,10 @@
 			.filter((s) => s.length > 0);
 	}
 
-	// Serialize items array back to newline-separated string
 	function serialize_items(arr: string[]): string {
 		return arr.join("\n");
 	}
 
-	// Sync from value prop to items
 	$: {
 		const parsed = parse_value(value);
 		const current = serialize_items(items);
@@ -43,10 +41,7 @@
 		}
 	}
 
-	function handle_drag_start(
-		e: DragEvent,
-		index: number
-	): void {
+	function handle_drag_start(e: DragEvent, index: number): void {
 		if (disabled) return;
 		dragging_index = index;
 		if (e.dataTransfer) {
@@ -55,31 +50,39 @@
 		}
 	}
 
-	function handle_drag_over(
-		e: DragEvent,
-		index: number
-	): void {
-		if (disabled) return;
+	function get_nearest_index(y: number): number {
+		const children = Array.from(list_el.children) as HTMLElement[];
+		for (let i = 0; i < children.length; i++) {
+			const rect = children[i].getBoundingClientRect();
+			const mid = rect.top + rect.height / 2;
+			if (y < mid) return i;
+		}
+		return children.length - 1;
+	}
+
+	function handle_list_drag_over(e: DragEvent): void {
+		if (disabled || dragging_index === null) return;
 		e.preventDefault();
 		if (e.dataTransfer) {
 			e.dataTransfer.dropEffect = "move";
 		}
-		drag_over_index = index;
+		drop_target = get_nearest_index(e.clientY);
 	}
 
-	function handle_drag_leave(): void {
-		drag_over_index = null;
+	function handle_list_drag_leave(e: DragEvent): void {
+		if (!list_el.contains(e.relatedTarget as Node)) {
+			drop_target = null;
+		}
 	}
 
-	function handle_drop(
-		e: DragEvent,
-		target_index: number
-	): void {
-		if (disabled) return;
+	function handle_list_drop(e: DragEvent): void {
+		if (disabled || dragging_index === null) return;
 		e.preventDefault();
-		drag_over_index = null;
 
-		if (dragging_index === null || dragging_index === target_index) {
+		const target_index = drop_target;
+		drop_target = null;
+
+		if (target_index === null || dragging_index === target_index) {
 			dragging_index = null;
 			return;
 		}
@@ -100,26 +103,30 @@
 
 	function handle_drag_end(): void {
 		dragging_index = null;
-		drag_over_index = null;
+		drop_target = null;
 	}
 </script>
 
 <label class:container>
 	<BlockTitle {show_label} {info}>{label}</BlockTitle>
 
-	<div class="drag-drop-list" class:disabled>
+	<div
+		class="drag-drop-list"
+		class:disabled
+		bind:this={list_el}
+		on:dragover={handle_list_drag_over}
+		on:dragleave={handle_list_drag_leave}
+		on:drop={handle_list_drop}
+	>
 		{#each items as item, index (item + "-" + index)}
 			<div
 				class="drag-item"
 				class:dragging={dragging_index === index}
-				class:drag-over={drag_over_index === index && dragging_index !== index}
+				class:drag-over={drop_target === index && dragging_index !== index}
 				draggable={!disabled}
 				role="listitem"
 				tabindex="0"
 				on:dragstart={(e) => handle_drag_start(e, index)}
-				on:dragover={(e) => handle_drag_over(e, index)}
-				on:dragleave={handle_drag_leave}
-				on:drop={(e) => handle_drop(e, index)}
 				on:dragend={handle_drag_end}
 			>
 				<span class="drag-handle">⠿</span>
