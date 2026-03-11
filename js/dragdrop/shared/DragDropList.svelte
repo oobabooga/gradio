@@ -18,6 +18,10 @@
 	let dragging_index: number | null = null;
 	let drop_target: number | null = null;
 	let list_el: HTMLDivElement;
+	let scroll_interval: ReturnType<typeof setInterval> | null = null;
+
+	const SCROLL_EDGE = 40;
+	const SCROLL_SPEED = 8;
 
 	function parse_value(val: string): string[] {
 		if (!val || !val.trim()) return [];
@@ -60,6 +64,20 @@
 		return children.length - 1;
 	}
 
+	function stop_auto_scroll(): void {
+		if (scroll_interval !== null) {
+			clearInterval(scroll_interval);
+			scroll_interval = null;
+		}
+	}
+
+	function start_auto_scroll(direction: number): void {
+		stop_auto_scroll();
+		scroll_interval = setInterval(() => {
+			list_el.scrollTop += direction;
+		}, 16);
+	}
+
 	function handle_list_drag_over(e: DragEvent): void {
 		if (disabled || dragging_index === null) return;
 		e.preventDefault();
@@ -67,17 +85,29 @@
 			e.dataTransfer.dropEffect = "move";
 		}
 		drop_target = get_nearest_index(e.clientY);
+
+		const rect = list_el.getBoundingClientRect();
+		const y = e.clientY - rect.top;
+		if (y < SCROLL_EDGE) {
+			start_auto_scroll(-SCROLL_SPEED);
+		} else if (y > rect.height - SCROLL_EDGE) {
+			start_auto_scroll(SCROLL_SPEED);
+		} else {
+			stop_auto_scroll();
+		}
 	}
 
 	function handle_list_drag_leave(e: DragEvent): void {
 		if (!list_el.contains(e.relatedTarget as Node)) {
 			drop_target = null;
+			stop_auto_scroll();
 		}
 	}
 
 	function handle_list_drop(e: DragEvent): void {
 		if (disabled || dragging_index === null) return;
 		e.preventDefault();
+		stop_auto_scroll();
 
 		const target_index = drop_target;
 		drop_target = null;
@@ -104,6 +134,7 @@
 	function handle_drag_end(): void {
 		dragging_index = null;
 		drop_target = null;
+		stop_auto_scroll();
 	}
 </script>
 
