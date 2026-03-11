@@ -26,6 +26,7 @@ from gradio.components import (
     Dataframe,
     Dataset,
     DownloadButton,
+    DragDrop,
     Dropdown,
     DuplicateButton,
     File,

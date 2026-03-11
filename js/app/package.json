@@ -40,6 +40,7 @@
 		"@gradio/dataframe": "workspace:^",
 		"@gradio/dataset": "workspace:^",
 		"@gradio/downloadbutton": "workspace:^",
+		"@gradio/dragdrop": "workspace:^",
 		"@gradio/dropdown": "workspace:^",
 		"@gradio/fallback": "workspace:^",
 		"@gradio/file": "workspace:^",

@@ -559,6 +559,9 @@ importers:
       '@gradio/downloadbutton':
         specifier: workspace:^
         version: link:../downloadbutton
+      '@gradio/dragdrop':
+        specifier: workspace:^
+        version: link:../dragdrop
       '@gradio/dropdown':
         specifier: workspace:^
         version: link:../dropdown
@@ -1067,6 +1070,18 @@ importers:
       '@gradio/preview':
         specifier: workspace:^
         version: link:../preview
+
+  js/dragdrop:
+    dependencies:
+      '@gradio/atoms':
+        specifier: workspace:^
+        version: link:../atoms
+      '@gradio/statustracker':
+        specifier: workspace:^
+        version: link:../statustracker
+      '@gradio/utils':
+        specifier: workspace:^
+        version: link:../utils
 
   js/dropdown:
     dependencies:
