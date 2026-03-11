@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher, tick } from "svelte";
+	import { createEventDispatcher, tick, onDestroy } from "svelte";
 	import { BlockTitle } from "@gradio/atoms";
 
 	export let value = "";
@@ -20,7 +20,6 @@
 	let list_el: HTMLDivElement;
 	let scroll_interval: ReturnType<typeof setInterval> | null = null;
 
-	const SCROLL_EDGE = 40;
 	const SCROLL_SPEED = 8;
 
 	function parse_value(val: string): string[] {
@@ -52,6 +51,7 @@
 			e.dataTransfer.effectAllowed = "move";
 			e.dataTransfer.setData("text/plain", String(index));
 		}
+		document.addEventListener("dragover", handle_document_drag_over);
 	}
 
 	function get_nearest_index(y: number): number {
@@ -78,6 +78,26 @@
 		}, 16);
 	}
 
+	function update_auto_scroll(client_y: number): void {
+		const rect = list_el.getBoundingClientRect();
+		if (client_y < rect.top) {
+			start_auto_scroll(-SCROLL_SPEED);
+		} else if (client_y > rect.bottom) {
+			start_auto_scroll(SCROLL_SPEED);
+		} else {
+			stop_auto_scroll();
+		}
+	}
+
+	function handle_document_drag_over(e: DragEvent): void {
+		if (dragging_index === null) return;
+		update_auto_scroll(e.clientY);
+	}
+
+	function remove_document_listener(): void {
+		document.removeEventListener("dragover", handle_document_drag_over);
+	}
+
 	function handle_list_drag_over(e: DragEvent): void {
 		if (disabled || dragging_index === null) return;
 		e.preventDefault();
@@ -85,22 +105,11 @@
 			e.dataTransfer.dropEffect = "move";
 		}
 		drop_target = get_nearest_index(e.clientY);
-
-		const rect = list_el.getBoundingClientRect();
-		const y = e.clientY - rect.top;
-		if (y < SCROLL_EDGE) {
-			start_auto_scroll(-SCROLL_SPEED);
-		} else if (y > rect.height - SCROLL_EDGE) {
-			start_auto_scroll(SCROLL_SPEED);
-		} else {
-			stop_auto_scroll();
-		}
 	}
 
 	function handle_list_drag_leave(e: DragEvent): void {
 		if (!list_el.contains(e.relatedTarget as Node)) {
 			drop_target = null;
-			stop_auto_scroll();
 		}
 	}
 
@@ -108,6 +117,7 @@
 		if (disabled || dragging_index === null) return;
 		e.preventDefault();
 		stop_auto_scroll();
+		remove_document_listener();
 
 		const target_index = drop_target;
 		drop_target = null;
@@ -135,7 +145,13 @@
 		dragging_index = null;
 		drop_target = null;
 		stop_auto_scroll();
+		remove_document_listener();
 	}
+
+	onDestroy(() => {
+		stop_auto_scroll();
+		remove_document_listener();
+	});
 </script>
 
 <label class:container>
