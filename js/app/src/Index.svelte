@@ -124,7 +124,10 @@
 	}
 
 	let css_text_stylesheet: HTMLStyleElement | null = null;
-	async function mount_custom_css(css_string: string | null): Promise<void> {
+	async function mount_custom_css(
+		css_string: string | null,
+		_config: { root: string; theme_hash?: number; stylesheets?: string[] }
+	): Promise<void> {
 		if (css_string) {
 			css_text_stylesheet = prefix_css(
 				css_string,
@@ -133,20 +136,20 @@
 			);
 		}
 		await mount_css(
-			config.root + "/theme.css?v=" + config.theme_hash,
+			_config.root + "/theme.css?v=" + _config.theme_hash,
 			document.head
 		);
-		if (!config.stylesheets) return;
+		if (!_config.stylesheets) return;
 
 		await Promise.all(
-			config.stylesheets.map((stylesheet) => {
+			_config.stylesheets.map((stylesheet) => {
 				let absolute_link =
 					stylesheet.startsWith("http:") || stylesheet.startsWith("https:");
 				if (absolute_link) {
 					return mount_css(stylesheet, document.head);
 				}
 
-				return fetch(config.root + "/" + stylesheet)
+				return fetch(_config.root + "/" + stylesheet)
 					.then((response) => response.text())
 					.then((css_string) => {
 						prefix_css(css_string, version);
@@ -157,50 +160,65 @@
 	async function add_custom_html_head(
 		head_string: string | null
 	): Promise<void> {
-		if (head_string) {
-			const parser = new DOMParser();
-			const parsed_head_html = Array.from(
-				parser.parseFromString(head_string, "text/html").head.children
-			);
+		if (!head_string) return;
 
-			if (parsed_head_html) {
-				for (let head_element of parsed_head_html) {
-					let newElement = document.createElement(head_element.tagName);
-					Array.from(head_element.attributes).forEach((attr) => {
-						newElement.setAttribute(attr.name, attr.value);
-					});
-					newElement.textContent = head_element.textContent;
+		const parser = new DOMParser();
+		const parsed_head_html = Array.from(
+			parser.parseFromString(head_string, "text/html").head.children
+		);
 
-					if (
-						newElement.tagName == "META" &&
-						newElement.getAttribute("property")
-					) {
-						const domMetaList = Array.from(
-							document.head.getElementsByTagName("meta") ?? []
-						);
-						const matched = domMetaList.find((el) => {
-							return (
-								el.getAttribute("property") ==
-									newElement.getAttribute("property") &&
-								!el.isEqualNode(newElement)
-							);
-						});
-						if (matched) {
-							document.head.replaceChild(newElement, matched);
-							continue;
-						}
-					}
-
-					if (newElement.tagName === "SCRIPT" && newElement.getAttribute("src")) {
-						await new Promise<void>((resolve, reject) => {
-							newElement.onload = () => resolve();
-							newElement.onerror = () => reject(new Error(`Failed to load script: ${newElement.getAttribute("src")}`));
-							document.head.appendChild(newElement);
-						});
-					} else {
-						document.head.appendChild(newElement);
-					}
+		// Preload all external scripts in parallel so the browser
+		// fetches them concurrently into its cache.
+		for (const head_element of parsed_head_html) {
+			const src = head_element.tagName === "SCRIPT" && head_element.getAttribute("src");
+			if (src) {
+				const preload = document.createElement("link");
+				preload.rel = "preload";
+				preload.as = "script";
+				preload.href = src;
+				const crossorigin = head_element.getAttribute("crossorigin");
+				if (crossorigin !== null) {
+					preload.crossOrigin = crossorigin || "anonymous";
 				}
+				document.head.appendChild(preload);
+			}
+		}
+
+		for (let head_element of parsed_head_html) {
+			let newElement = document.createElement(head_element.tagName);
+			Array.from(head_element.attributes).forEach((attr) => {
+				newElement.setAttribute(attr.name, attr.value);
+			});
+			newElement.textContent = head_element.textContent;
+
+			if (
+				newElement.tagName == "META" &&
+				newElement.getAttribute("property")
+			) {
+				const domMetaList = Array.from(
+					document.head.getElementsByTagName("meta") ?? []
+				);
+				const matched = domMetaList.find((el) => {
+					return (
+						el.getAttribute("property") ==
+							newElement.getAttribute("property") &&
+						!el.isEqualNode(newElement)
+					);
+				});
+				if (matched) {
+					document.head.replaceChild(newElement, matched);
+					continue;
+				}
+			}
+
+			if (newElement.tagName === "SCRIPT" && newElement.getAttribute("src")) {
+				await new Promise<void>((resolve, reject) => {
+					newElement.onload = () => resolve();
+					newElement.onerror = () => reject(new Error(`Failed to load script: ${newElement.getAttribute("src")}`));
+					document.head.appendChild(newElement);
+				});
+			} else {
+				document.head.appendChild(newElement);
 			}
 		}
 	}
@@ -254,6 +272,17 @@
 					}`
 				: host || space || src || location.origin;
 
+		// Start CSS work early using the config embedded in the HTML,
+		// in parallel with Client.connect() which does heavier async work
+		// (view_api, heartbeat, etc.).
+		const early_config = window.gradio_config;
+		const css_promise = early_config
+			? Promise.all([
+					mount_custom_css(early_config.css, early_config),
+					add_custom_html_head(early_config.head)
+				])
+			: null;
+
 		app = await Client.connect(api_url, {
 			status_callback: handle_status,
 			with_null_state: true,
@@ -274,8 +303,12 @@
 			detail: "RUNNING"
 		};
 
-		await mount_custom_css(config.css);
-		await add_custom_html_head(config.head);
+		if (css_promise) {
+			await css_promise;
+		} else {
+			await mount_custom_css(config.css, config);
+			await add_custom_html_head(config.head);
+		}
 		css_ready = true;
 		window.__is_colab__ = config.is_colab;
 
@@ -305,7 +338,7 @@
 
 					config = app.config;
 					window.__gradio_space__ = config.space_id;
-					await mount_custom_css(config.css);
+					await mount_custom_css(config.css, config);
 				});
 			}, 200);
 		}

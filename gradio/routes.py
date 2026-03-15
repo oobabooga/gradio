@@ -399,13 +399,12 @@ class App(FastAPI):
                 template = (
                     "frontend/share.html" if blocks.share else "frontend/index.html"
                 )
-                gradio_api_info = api_info(False)
                 return templates.TemplateResponse(
                     template,
                     {
                         "request": request,
                         "config": config,
-                        "gradio_api_info": gradio_api_info,
+                        "gradio_api_info": None,
                     },
                 )
             except TemplateNotFound as err:
