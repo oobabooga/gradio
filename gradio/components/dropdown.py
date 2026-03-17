@@ -153,6 +153,8 @@ class Dropdown(FormComponent):
         Returns:
             Passes the value of the selected dropdown choice as a `str | int | float` or its index as an `int` into the function, depending on `type`. Or, if `multiselect` is True, passes the values of the selected dropdown choices as a list of correspoding values/indices instead.
         """
+        if not self.multiselect and isinstance(payload, list):
+            payload = payload[0] if payload else None
         if self.type == "value":
             return payload
         elif self.type == "index":
