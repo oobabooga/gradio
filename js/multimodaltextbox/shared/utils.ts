@@ -19,6 +19,11 @@ export async function resize(
 
 	target.style.height = "1px";
 
+	const computed = getComputedStyle(target);
+	const border_top = parseFloat(computed.borderTopWidth) || 0;
+	const border_bottom = parseFloat(computed.borderBottomWidth) || 0;
+	const border_total = border_top + border_bottom;
+
 	let scroll_height;
 	if (max && target.scrollHeight > max) {
 		scroll_height = max;
@@ -28,7 +33,7 @@ export async function resize(
 		scroll_height = target.scrollHeight;
 	}
 
-	target.style.height = `${scroll_height}px`;
+	target.style.height = `${scroll_height + border_total}px`;
 }
 
 export function text_area_resize(
