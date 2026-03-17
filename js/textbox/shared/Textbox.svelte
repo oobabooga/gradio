@@ -155,7 +155,7 @@
 		_value: string
 	): any | undefined {
 		if (lines === max_lines) return;
-		_el.style.overflowY = "scroll";
+		_el.style.overflowY = "auto";
 
 		if (_value.trim()) {
 			do_resize();

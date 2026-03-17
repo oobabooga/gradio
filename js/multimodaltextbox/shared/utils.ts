@@ -36,7 +36,7 @@ export function text_area_resize(
 	_value: Value
 ): any | undefined {
 	if (_value.lines === _value.max_lines) return;
-	_el.style.overflowY = "scroll";
+	_el.style.overflowY = "auto";
 
 	if (_value.text.trim()) {
 		resize(_el, _value.lines, _value.max_lines);
