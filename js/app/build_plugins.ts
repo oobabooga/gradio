@@ -50,18 +50,8 @@ export function generate_cdn_entry({
 
 			writeFileSync(output_location, make_entry(script?.attributes.src || ""));
 
-			if (!script) return;
-
-			const transformed_html =
-				(bundle["index.html"].source as string).substring(0, script?.range[0]) +
-				`<script type="module" crossorigin src="${cdn_base}/${version}/gradio.js"></script>` +
-				(bundle["index.html"].source as string).substring(
-					script?.range[1],
-					source.length
-				);
-
 			const share_html_location = join(config.dir, "share.html");
-			writeFileSync(share_html_location, transformed_html);
+			writeFileSync(share_html_location, source);
 		}
 	};
 }
@@ -154,19 +144,6 @@ export function handle_ce_css(): Plugin {
 					)
 			);
 
-			const share_html_location = join(config.dir, "share.html");
-			const share_html = readFileSync(share_html_location, "utf8");
-			const share_tree = parse(share_html);
-			const node = Array.from(
-				share_tree.querySelectorAll("link[rel=stylesheet]")
-			).find((node) => /.*\/index(.*?)\.css/.test(node.attributes.href));
-
-			if (!node) return;
-			const transformed_html =
-				share_html.substring(0, node.range[0]) +
-				share_html.substring(node.range[1], share_html.length);
-
-			writeFileSync(share_html_location, transformed_html);
 		}
 	};
 }
