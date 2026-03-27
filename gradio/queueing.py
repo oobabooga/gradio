@@ -122,6 +122,7 @@ class Queue:
         self.event_analytics: dict[str, dict[str, float | str | None]] = {}
         self._loop: asyncio.AbstractEventLoop | None = None
         self._loop_thread_id: int | None = None
+        self._has_work = asyncio.Event()
 
     def start(self):
         self._loop = asyncio.get_event_loop()
@@ -156,6 +157,7 @@ class Queue:
 
     def close(self):
         self.stopped = True
+        self._has_work.set()
 
     def send_message(
         self,
@@ -240,6 +242,7 @@ class Queue:
                 "Event not found in queue. If you are deploying this Gradio app with multiple replicas, please enable stickiness to ensure that all requests from the same user are routed to the same instance."
             ) from e
         event_queue.queue.append(event)
+        self._has_work.set()
         self.event_analytics[event._id] = {
             "time": time.time(),
             "status": "queued",
@@ -295,12 +298,9 @@ class Queue:
     async def start_processing(self) -> None:
         try:
             while not self.stopped:
-                if len(self) == 0:
-                    await asyncio.sleep(self.sleep_when_free)
-                    continue
-
-                if None not in self.active_jobs:
-                    await asyncio.sleep(self.sleep_when_free)
+                if len(self) == 0 or None not in self.active_jobs:
+                    self._has_work.clear()
+                    await self._has_work.wait()
                     continue
 
                 # Using mutex to avoid editing a list in use
@@ -331,7 +331,8 @@ class Queue:
                     if self.live_updates:
                         self.broadcast_estimations(concurrency_id)
                 else:
-                    await asyncio.sleep(self.sleep_when_free)
+                    self._has_work.clear()
+                    await self._has_work.wait()
         finally:
             self.stopped = True
             self._cancel_asyncio_tasks()
@@ -643,6 +644,7 @@ class Queue:
                 # without putting the `events` into `self.active_jobs`.
                 # https://github.com/gradio-app/gradio/blob/f09aea34d6bd18c1e2fef80c86ab2476a6d1dd83/gradio/routes.py#L594-L596
                 pass
+            self._has_work.set()
             for event in events:
                 # Always reset the state of the iterator
                 # If the job finished successfully, this has no effect
