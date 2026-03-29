@@ -8,6 +8,7 @@ from gradio_client.documentation import document
 
 from gradio.components.base import FormComponent
 from gradio.events import Events
+from gradio.exceptions import Error
 
 
 @document()
@@ -110,14 +111,18 @@ class CheckboxGroup(FormComponent):
         Returns:
             Passes the list of checked checkboxes as a `list[str | int | float]` or their indices as a `list[int]` into the function, depending on `type`.
         """
+        if payload is None:
+            return []
+        choice_values = [value for _, value in self.choices]
+        for value in payload:
+            if value not in choice_values:
+                raise Error(
+                    f"Value: {value} is not in the list of choices: {choice_values}"
+                )
         if self.type == "value":
             return payload
         elif self.type == "index":
-            choice_values = [value for _, value in self.choices]
-            return [
-                choice_values.index(choice) if choice in choice_values else None
-                for choice in payload
-            ]
+            return [choice_values.index(choice) for choice in payload]
         else:
             raise ValueError(
                 f"Unknown type: {self.type}. Please choose from: 'value', 'index'."

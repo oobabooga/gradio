@@ -9,6 +9,7 @@ from gradio_client.documentation import document
 
 from gradio.components.base import FormComponent
 from gradio.events import Events
+from gradio.exceptions import Error
 
 
 @document()
@@ -155,13 +156,24 @@ class Dropdown(FormComponent):
         """
         if not self.multiselect and isinstance(payload, list):
             payload = payload[0] if payload else None
+        if payload is None:
+            return None
+        choice_values = [value for _, value in self.choices]
+        if not self.allow_custom_value:
+            if isinstance(payload, list):
+                for value in payload:
+                    if value not in choice_values:
+                        raise Error(
+                            f"Value: {value} is not in the list of choices: {choice_values}"
+                        )
+            elif payload not in choice_values:
+                raise Error(
+                    f"Value: {payload} is not in the list of choices: {choice_values}"
+                )
         if self.type == "value":
             return payload
         elif self.type == "index":
-            choice_values = [value for _, value in self.choices]
-            if payload is None:
-                return None
-            elif self.multiselect:
+            if self.multiselect:
                 if not isinstance(payload, list):
                     raise TypeError("Multiselect dropdown payload must be a list")
                 return [

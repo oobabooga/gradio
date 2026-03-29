@@ -22,14 +22,16 @@ class TestDropdown:
         dropdown = gr.Dropdown(choices=["a", "b"], type="index")
         assert dropdown.preprocess("a") == 0
         assert dropdown.preprocess("b") == 1
-        assert dropdown.preprocess("c") is None
+        with pytest.raises(gr.Error):
+            dropdown.preprocess("c")
 
         dropdown = gr.Dropdown(choices=["a", "b"], type="index", multiselect=True)
         assert dropdown.preprocess(["a"]) == [0]
         assert dropdown.preprocess(["a", "b"]) == [0, 1]
-        assert dropdown.preprocess(["a", "b", "c"]) == [0, 1, None]
+        with pytest.raises(gr.Error):
+            dropdown.preprocess(["a", "b", "c"])
 
-        dropdown_input_multiselect = gr.Dropdown(["a", "b", ("c", "c full")])
+        dropdown_input_multiselect = gr.Dropdown(["a", "b", ("c", "c full")], multiselect=True)
         assert dropdown_input_multiselect.preprocess(["a", "c full"]) == ["a", "c full"]
         assert dropdown_input_multiselect.postprocess(["a", "c full"]) == [
             "a",
@@ -65,6 +67,15 @@ class TestDropdown:
             "type": "value",
             "info": None,
         }
+        # Invalid values should be rejected
+        dropdown = gr.Dropdown(choices=["a", "b"])
+        with pytest.raises(gr.Error):
+            dropdown.preprocess("../../../etc/passwd")
+
+        # But allow_custom_value=True should bypass validation
+        dropdown = gr.Dropdown(choices=["a", "b"], allow_custom_value=True)
+        assert dropdown.preprocess("custom") == "custom"
+
         with pytest.raises(ValueError):
             gr.Dropdown(["a"], type="unknown")
 
@@ -76,7 +87,7 @@ class TestDropdown:
         """
         Interface, process
         """
-        dropdown_input = gr.Dropdown(["a", "b", "c"])
+        dropdown_input = gr.Dropdown(["a", "b", "c"], multiselect=True)
         iface = gr.Interface(lambda x: "|".join(x), dropdown_input, "textbox")
         assert iface(["a", "c"]) == "a|c"
         assert iface([]) == ""
