@@ -1080,6 +1080,12 @@ def is_in_or_equal(path_1: str | Path, path_2: str | Path):
         path_2: str or Path (to file or directory)
     """
     path_1, path_2 = abspath(path_1), abspath(path_2)
+    if sys.platform == 'win32':
+        path_1 = Path(os.path.normcase(path_1))
+        path_2 = Path(os.path.normcase(path_2))
+    elif sys.platform == 'darwin':
+        path_1 = Path(str(path_1).lower())
+        path_2 = Path(str(path_2).lower())
     try:
         relative_path = path_1.relative_to(path_2)
         if str(relative_path) == ".":
