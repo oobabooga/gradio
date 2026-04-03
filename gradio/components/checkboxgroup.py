@@ -8,7 +8,6 @@ from gradio_client.documentation import document
 
 from gradio.components.base import FormComponent
 from gradio.events import Events
-from gradio.exceptions import Error
 
 
 @document()
@@ -116,11 +115,7 @@ class CheckboxGroup(FormComponent):
         choice_values = [value for _, value in self.choices]
         if not choice_values:
             return []
-        for value in payload:
-            if value not in choice_values:
-                raise Error(
-                    f"Value: {value} is not in the list of choices: {choice_values}"
-                )
+        payload = [v for v in payload if v in choice_values]
         if self.type == "value":
             return payload
         elif self.type == "index":

@@ -9,7 +9,6 @@ from gradio_client.documentation import document
 
 from gradio.components.base import FormComponent
 from gradio.events import Events
-from gradio.exceptions import Error
 
 
 @document()
@@ -163,15 +162,9 @@ class Dropdown(FormComponent):
             if not choice_values:
                 return [] if isinstance(payload, list) else None
             if isinstance(payload, list):
-                for value in payload:
-                    if value not in choice_values:
-                        raise Error(
-                            f"Value: {value} is not in the list of choices: {choice_values}"
-                        )
+                payload = [v for v in payload if v in choice_values]
             elif payload not in choice_values:
-                raise Error(
-                    f"Value: {payload} is not in the list of choices: {choice_values}"
-                )
+                return None
         if self.type == "value":
             return payload
         elif self.type == "index":

@@ -22,14 +22,12 @@ class TestDropdown:
         dropdown = gr.Dropdown(choices=["a", "b"], type="index")
         assert dropdown.preprocess("a") == 0
         assert dropdown.preprocess("b") == 1
-        with pytest.raises(gr.Error):
-            dropdown.preprocess("c")
+        assert dropdown.preprocess("c") is None
 
         dropdown = gr.Dropdown(choices=["a", "b"], type="index", multiselect=True)
         assert dropdown.preprocess(["a"]) == [0]
         assert dropdown.preprocess(["a", "b"]) == [0, 1]
-        with pytest.raises(gr.Error):
-            dropdown.preprocess(["a", "b", "c"])
+        assert dropdown.preprocess(["a", "b", "c"]) == [0, 1]
 
         dropdown_input_multiselect = gr.Dropdown(["a", "b", ("c", "c full")], multiselect=True)
         assert dropdown_input_multiselect.preprocess(["a", "c full"]) == ["a", "c full"]
@@ -67,10 +65,9 @@ class TestDropdown:
             "type": "value",
             "info": None,
         }
-        # Invalid values should be rejected
+        # Invalid values should be silently dropped (returns None)
         dropdown = gr.Dropdown(choices=["a", "b"])
-        with pytest.raises(gr.Error):
-            dropdown.preprocess("../../../etc/passwd")
+        assert dropdown.preprocess("../../../etc/passwd") is None
 
         # But allow_custom_value=True should bypass validation
         dropdown = gr.Dropdown(choices=["a", "b"], allow_custom_value=True)

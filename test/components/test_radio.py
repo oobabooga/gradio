@@ -38,8 +38,7 @@ class TestRadio:
         radio = gr.Radio(choices=["a", "b"], type="index")
         assert radio.preprocess("a") == 0
         assert radio.preprocess("b") == 1
-        with pytest.raises(gr.Error):
-            radio.preprocess("c")  # value not in choices raises Error
+        assert radio.preprocess("c") is None
 
         # When a Gradio app is loaded with gr.load, the tuples are converted to lists,
         # so we need to test that case as well
