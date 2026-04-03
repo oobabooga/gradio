@@ -207,10 +207,14 @@ class Dropdown(FormComponent):
         """
         if value is None:
             return None
+        choice_values = [v for _, v in self.choices]
         if self.multiselect:
             if not isinstance(value, list):
                 value = [value]
-            [self._warn_if_invalid_choice(_y) for _y in value]
+            value = [v for v in value if self.allow_custom_value or v in choice_values]
+            if not value:
+                return None
         else:
-            self._warn_if_invalid_choice(value)
+            if not self.allow_custom_value and value not in choice_values:
+                return None
         return value
