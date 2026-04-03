@@ -114,6 +114,8 @@ class CheckboxGroup(FormComponent):
         if payload is None:
             return []
         choice_values = [value for _, value in self.choices]
+        if not choice_values:
+            return []
         for value in payload:
             if value not in choice_values:
                 raise Error(

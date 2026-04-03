@@ -160,6 +160,8 @@ class Dropdown(FormComponent):
             return None
         choice_values = [value for _, value in self.choices]
         if not self.allow_custom_value:
+            if not choice_values:
+                return [] if isinstance(payload, list) else None
             if isinstance(payload, list):
                 for value in payload:
                     if value not in choice_values:

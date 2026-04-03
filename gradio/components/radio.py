@@ -106,6 +106,8 @@ class Radio(FormComponent):
         if payload is None:
             return None
         choice_values = [value for _, value in self.choices]
+        if not choice_values:
+            return None
         if payload not in choice_values:
             raise Error(
                 f"Value: {payload} is not in the list of choices: {choice_values}"
