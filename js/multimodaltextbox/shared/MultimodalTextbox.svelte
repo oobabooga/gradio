@@ -209,7 +209,7 @@
 			style="display: {value.files.length > 0 || uploading ? 'flex' : 'none'};"
 		>
 			{#each value.files as file, index}
-				<button class="thumbnail-item thumbnail-small">
+				<button class="thumbnail-item thumbnail-small" title={file.orig_name || ""}>
 					<button
 						class:disabled
 						class="delete-button"
