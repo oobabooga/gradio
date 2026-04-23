@@ -124,11 +124,11 @@ class Slider(FormComponent):
         """
         return self.minimum if value is None else value
 
-    def preprocess(self, payload: float) -> float:
+    def preprocess(self, payload: float | None) -> float:
         """
         Parameters:
             payload: slider value
         Returns:
             Passes slider value as a {float} into the function.
         """
-        return payload
+        return self.minimum if payload is None else payload
