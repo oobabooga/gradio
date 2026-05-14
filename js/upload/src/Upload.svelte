@@ -162,7 +162,7 @@
 		);
 	}
 
-	async function loadFilesFromDrop(e: DragEvent): Promise<void> {
+	export async function loadFilesFromDrop(e: DragEvent): Promise<void> {
 		dragging = false;
 		if (!e.dataTransfer?.files) return;
 		const files_to_load = Array.from(e.dataTransfer.files).filter((file) => {

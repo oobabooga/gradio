@@ -197,6 +197,20 @@
 			}
 		}
 	}
+
+	function handle_drop(event: DragEvent): void {
+		event.preventDefault();
+		upload_component.loadFilesFromDrop(event);
+	}
+
+	function handle_dragover(event: DragEvent): void {
+		event.preventDefault();
+		dragging = true;
+	}
+
+	function handle_dragleave(): void {
+		dragging = false;
+	}
 </script>
 
 <!-- svelte-ignore a11y-autofocus -->
@@ -238,7 +252,12 @@
 			{/if}
 		</div>
 	{/if}
-	<div class="input-container">
+	<div
+		class="input-container"
+		on:drop={handle_drop}
+		on:dragover={handle_dragover}
+		on:dragleave={handle_dragleave}
+	>
 		<Upload
 			bind:this={upload_component}
 			on:load={handle_upload}
